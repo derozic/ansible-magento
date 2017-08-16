@@ -1,0 +1,23 @@
+---
+# Which version of Magento to deploy
+mage_version: 1.8.1.0
+
+# These are the Magento database settings
+data_location: /mount/db
+web_location: /web/www
+servername: example.com
+domain: example.com
+
+db_root_passwd: magento
+db_user_passwd: magento
+db_name: magento
+db_user: magento
+
+# You shouldn't need to change this.
+mysql_port: 3306
+http_port: 8080
+nginx_port: 80
+
+# This is used for the nginx server configuration, but # access to the
+# Magento site is not restricted by a # named host.
+domain: example.com

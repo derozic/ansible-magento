@@ -1,0 +1,19 @@
+######### CREATE DATABASE #########
+- name: create Database
+  mysql_db:
+    login_user: root
+    login_password: "{{ db_root_passwd }}"
+    name: "{{ db_name }}"
+    state: present
+
+# Create database user with name '' and password '' with all database privileges
+  
+- name: MySQL user has ALL THE PRIVILEGES (in order to connect remotely)
+  mysql_user:
+    login_user: root
+    login_password: "{{ db_root_passwd }}"
+    name: "{{ db_user }}" 
+    password: "{{ db_user_passwd }}" 
+    priv: "{{ db_name }}.*:ALL,GRANT" 
+    host: "localhost" 
+    state: present

@@ -1,0 +1,70 @@
+- name: Set MySQL root password before installing
+  debconf: 
+    name: 'mysql-server' 
+    question: 'mysql-server/root_password' 
+    value: '{{db_root_passwd | quote}}' 
+    vtype: 'password'
+    
+- name: Confirm MySQL root password before installing
+  debconf: 
+    name: 'mysql-server' 
+    question: 'mysql-server/root_password_again' 
+    value: '{{db_root_passwd | quote}}' 
+    vtype: 'password'
+    
+- name: Install MySQL
+  apt: package={{ item }} state=installed force=yes update_cache=yes cache_valid_time=3600
+  when: ansible_os_family == 'Debian'
+  with_items:
+    - mysql-server
+    - mysql-client
+    - python-mysqldb
+    - php5-mysql
+    
+- name: Deletes anonymous MySQL server user for localhost
+  mysql_user: user="" state="absent" login_password="{{ db_root_passwd }}" login_user=root
+  
+- name: Secures the MySQL root user
+  mysql_user: user="root" password="{{ db_root_passwd }}" host="{{ item }}" login_password="{{db_root_passwd}}" login_user=root
+  with_items:
+    - 127.0.0.1
+    - localhost  
+
+- name: create /mount/db/ directory
+  file: path={{data_location}} state=directory owner=mysql group=mysql mode=0700
+
+######### MOVE MYSQL DATA #########
+
+- name: MySQL | Stop service to move data
+  service:
+    name: mysql
+    state: stopped
+    enabled: yes
+
+- name: MySQL | Copy data
+  shell: "{{ item }}"
+  with_items:
+    - "mv /var/lib/mysql/* {{data_location}}"
+  sudo: yes
+
+- name: MySQL | Update MySQL configuration
+  replace:
+    dest: /etc/mysql/my.cnf
+    regexp: "/var/lib/mysql"
+    replace: "{{data_location}}"
+
+- name: Fix  permissions path of mysql data
+  file: path=/mount/db owner=mysql group=mysql mode=0775 state=directory recurse=yes
+
+- name: MySQL | Start service after moving data
+  service:
+    name: mysql
+    state: restarted
+    enabled: yes
+
+
+- name: MySQL | Check if old data directory is removed
+  file:
+    path: /var/lib/mysql
+    state: absent
+  sudo: yes

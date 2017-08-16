@@ -1,0 +1,33 @@
+- name: 'Install Python PIP'
+  tags: 'aws-cli'
+  become: 'yes'
+  apt: >
+    pkg=python-pip
+    state=latest
+- name: 'Install AWS CLI'
+  tags: 'aws-cli'
+  become: 'yes'
+  pip: >
+    name=awscli
+    state=latest
+    
+- name: Install PHP Memcached extension (Debian).
+  apt: name={{ item }} update_cache=yes state=latest
+  with_items: 
+    - memcached
+  notify:
+    - restart php5-fpm
+    
+- name: set timezone to Europe/Rome
+  timezone:
+    name: Europe/Rome
+    
+- name: create /web/www/ directory
+  file: 
+    path: "{{ web_location }}/{{ domain}}"
+    state: directory 
+    owner: www-data 
+    group: www-data 
+    mode: 0700
+    
+        

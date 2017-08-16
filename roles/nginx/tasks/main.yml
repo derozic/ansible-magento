@@ -1,0 +1,24 @@
+- name: Install the nginx package
+  apt: name=nginx state=present update_cache=yes
+
+- name: Make sure the sites-available, sites-enabled and conf.d directories exist
+  file: path=/etc/nginx/{{ item }} state=directory owner=root group=root mode=0755
+  with_items:
+    - "sites-available"
+    - "sites-enabled"
+    - "conf.d"
+
+- name: Make sure the nginx configuration is updated
+  action: template src=templates/proxy.conf dest=/etc/nginx/sites-available/proxy.conf
+  notify:
+    - restart nginx
+
+- name: Download proxy file
+  action: template src=templates/nginx.conf dest=/etc/nginx/sites-available/nginx.conf
+  notify:
+    - restart nginx
+
+- name: Enable the nginx default site
+  file: path=/etc/nginx/sites-enabled/proxy.conf state=link src=/etc/nginx/sites-available/proxy.conf
+  notify:
+   - restart nginx

@@ -1,0 +1,56 @@
+- name: install apache & packages
+  apt: name={{ item }} update_cache=yes state=latest
+  with_items:
+    - apache2
+    - apache2-mpm-prefork
+    - libapache2-mod-proxy-html
+    - libapache2-mod-fastcgi
+
+- name: create /web/www/ directory
+  file:
+    path: "/var/log/apache2/{{ servername }}"
+    state: directory
+    owner: root
+    group: adm
+    mode: 0700
+
+
+- name: apache2 listen on port {{ http_port }}
+  lineinfile: dest=/etc/apache2/ports.conf regexp="^Listen " line="Listen {{ http_port }}" state=present
+  #lineinfile: dest=/etc/apache2/ports.conf regexp="^Listen 80" line="Listen 8080" state=present
+  notify:
+    - restart apache2
+
+- name: Download  virtual host file
+  action: template src=templates/virtualhost.conf dest=/etc/apache2/sites-available/{{ domain }}.conf
+  notify:
+  - restart apache2
+
+#- name: apache2 virtualhost on port {{ http_port }}
+  #lineinfile: dest=/etc/apache2/sites-available/000-default.conf regexp="^<VirtualHost \*:" line="<VirtualHost *:{{ http_port }}>"
+#  lineinfile: dest=/etc/apache2/sites-available/{{ domain }}.conf regexp="^<VirtualHost \*:8080>" line="<VirtualHost *:8081>" state=present
+#  notify:
+#    - restart apache2
+
+- name: a2ensite {{ domain }}
+  command: a2ensite {{ domain }}
+  args:
+    creates: /etc/apache2/sites-enabled/{{ domain }}.conf
+  notify:
+    - restart apache2
+
+- name: Deactivates the default virtualhost
+  command: a2dissite 000-default
+
+- name: Enable apache2 modules
+  apache2_module:
+    state: "{{ item.state }}"
+    name: "{{ item.name }}"
+  with_items:
+    - { state: absent, name: mpm_event }
+    - { state: present, name: mpm_prefork }
+    - { state: present, name: rewrite }
+    - { state: present, name: actions }
+    - { state: present, name: headers }
+    - { state: present, name: proxy_fcgi }
+    - { state: present, name: proxy_fcgi }

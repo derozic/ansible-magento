@@ -1,0 +1,15 @@
+---
+- name: Install and configuration of Magento, MySQL, Apache, Nginx, and PHP-FPM
+  hosts: localhost
+  user: root
+  # remote_user: user
+  # sudo: yes
+
+  roles:
+    - common
+    - mysql
+    - setup_mysql
+    - apache
+    - nginx
+    - php-fpm
+#    - magento
