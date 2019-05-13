@@ -20,7 +20,7 @@
     
 - name: set timezone to Europe/Rome
   timezone:
-    name: Europe/Rome
+    name: Etc/UTC
     
 - name: create /web/www/ directory
   file: 
